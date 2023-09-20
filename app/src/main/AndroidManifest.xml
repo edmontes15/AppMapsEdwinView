@@ -23,7 +23,8 @@
             android:value="AIzaSyAgLmq3pu6SyesVOGpNAb4dW4qqKkX8O30" />
         <activity
             android:name=".MainActivityMaps"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
