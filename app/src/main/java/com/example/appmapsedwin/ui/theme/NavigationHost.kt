@@ -9,12 +9,12 @@ import androidx.navigation.compose.composable
 fun NavigationHost(
     navHostController: NavHostController
 ){
-    NavHost(navController = navHostController, startDestination = Destinations.PantallaSettings.route){
-        composable(Destinations.PantallaSettings.route){
-            PantallaSettings()
-        }
+    NavHost(navController = navHostController, startDestination = Destinations.PantallaMaps.route){
         composable(Destinations.PantallaMaps.route){
             PantallaMaps()
+        }
+        composable(Destinations.PantallaSettings.route){
+            PantallaSettings()
         }
     }
 }

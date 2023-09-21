@@ -18,8 +18,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.appmapsedwin.mvvm.model.LocationData
 import com.example.appmapsedwin.mvvm.repository.ApiService
+import com.example.appmapsedwin.ui.theme.LocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -39,6 +41,7 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLatitude: Double = 0.0
     private var currentLongitude: Double = 0.0
+    private lateinit var locationViewModel: LocationViewModel
 
     companion object {
         const val REQUEST_CODE_LOCATION = 0
@@ -50,8 +53,10 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         createMapFragment()
         setupNotificationChannel()
 
-        //sendNotification()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // Inicializa el ViewModel
+        locationViewModel = ViewModelProvider(this)[LocationViewModel::class.java]
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -199,20 +204,7 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         print("Jalando padre")
         val notificationManager = NotificationManagerCompat.from(applicationContext)
         notificationManager.notify(1, notification)
-        GlobalScope.launch(Dispatchers.IO) {
-            val response = ApiService.locationApi.sendLocation(LocationData(currentLatitude, currentLongitude))
-            if (response.isSuccessful) {
-                Log.d("Si agarro", "Si agarro")
-                // La solicitud se realizó correctamente
-                val responseBody = response.body()
-                // Puedes usar 'responseBody' para obtener más información de la respuesta
-            } else {
-                // Hubo un error en la solicitud
-                Log.d("No agarro", "No agarro")
-                val errorBody = response.errorBody()?.string()
-                // 'errorBody' contiene el cuerpo de la respuesta de error del servidor
-            }
-        }
+        sendLocationToServer()
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -236,4 +228,8 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         //stopLocationUpdates()
     }
 
+    private fun sendLocationToServer() {
+        // Llama a la función en el ViewModel para enviar la ubicación
+        locationViewModel.sendLocation(currentLatitude, currentLongitude)
+    }
 }
