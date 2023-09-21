@@ -1,4 +1,4 @@
-package com.example.appmapsedwin.ui.theme
+package com.example.appmapsedwin.ui.theme.theme
 
 import android.app.Activity
 import android.os.Build

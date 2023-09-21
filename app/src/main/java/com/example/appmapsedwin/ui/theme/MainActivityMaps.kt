@@ -1,25 +1,26 @@
-package com.example.appmapsedwin
+package com.example.appmapsedwin.ui.theme
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
-import android.os.Build
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.example.appmapsedwin.mvvm.model.LocationData
-import com.example.appmapsedwin.mvvm.repository.ApiService
+import androidx.lifecycle.ViewModelProvider
+import com.example.appmapsedwin.R
+import com.example.appmapsedwin.ui.theme.viewModel.LocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,9 +30,8 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import java.util.Calendar
+
 
 class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener,
     LocationListener {
@@ -39,6 +39,10 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLatitude: Double = 0.0
     private var currentLongitude: Double = 0.0
+    private lateinit var locationViewModel: LocationViewModel
+    private lateinit var notificationManager: NotificationManager2
+    private val handler = Handler()
+    val currentDate = Calendar.getInstance().time
 
     companion object {
         const val REQUEST_CODE_LOCATION = 0
@@ -48,20 +52,78 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_maps)
         createMapFragment()
-        setupNotificationChannel()
-
-        //sendNotification()
+        notificationManager = NotificationManager2(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        locationViewModel = ViewModelProvider(this)[LocationViewModel::class.java]
+
     }
+
+    private fun scheduleNotification() {
+        val delayMillis = 5000 // 5000 milisegundos = 5 segundos
+        handler.postDelayed({
+            // Coloca aquí la lógica para enviar la notificación con latitud y longitud
+            notificationManager.sendNotification(currentLatitude, currentLongitude, currentDate)
+            sendLocationToServer()
+            // Programa la siguiente notificación después de 5 segundos
+            scheduleNotification()
+        }, delayMillis.toLong())
+    }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-        createMarker()
-        map.setOnMyLocationButtonClickListener(this)
-        map.setOnMyLocationClickListener(this)
-        enabledLocation()
+        if(isInternetAvailable(this)){
+            if(isGPSEnabled(this)){
+                scheduleNotification()
+                createMarker()
+                map.setOnMyLocationButtonClickListener(this)
+                map.setOnMyLocationClickListener(this)
+                enabledLocation()
+            }else{
+                showRetryDialog2()
+            }
+        }else{
+            showRetryDialog()
+        }
     }
+
+    private fun showRetryDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Sin conexión a Internet")
+        builder.setMessage("No hay conexión a Internet. ¿Deseas volver a intentarlo?")
+        builder.setPositiveButton("Sí") { dialog, which ->
+            val intent = Intent(this, MainActivityMaps::class.java)
+            finish() // Finaliza la actividad actual
+            startActivity(intent)
+        }
+        builder.setNegativeButton("No") { _, _ ->
+            finish()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    private fun showRetryDialog2() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("No tienes activado la ubicacion")
+        builder.setMessage("Prende tu ubicaion. ¿Deseas volver a intentarlo?")
+        builder.setPositiveButton("Sí") { dialog, which ->
+            val intent = Intent(this, MainActivityMaps::class.java)
+            finish() // Finaliza la actividad actual
+            startActivity(intent)
+        }
+        builder.setNegativeButton("No") { _, _ ->
+            finish()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+
+
+
+    // Esta función solicita permisos de notificación
+
 
     private fun createMarker() {
         if (isLocationPermissionGranted()) {
@@ -83,6 +145,8 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
                             4000,
                             null
                         )
+
+
                     }
                 }
         } else {
@@ -176,64 +240,19 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     override fun onLocationChanged(location: Location) {
     }
 
-    fun setupNotificationChannel() {
-        val channelID = "chat"
-        val channelName = "chat"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelID, channelName, importance)
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
+    private fun sendLocationToServer() {
+        // Llama a la función en el ViewModel para enviar la ubicación
+        locationViewModel.sendLocation(currentLatitude, currentLongitude, currentDate)
     }
 
-    private fun sendLocationNotification() {
-        val channelID = "chat"
-
-        val notification = NotificationCompat.Builder(this, channelID).apply {
-            setContentTitle("Ubicación")
-            setContentText("Latitud: $currentLatitude, Longitud: $currentLongitude")
-            setSmallIcon(R.drawable.ic_moto)
-        }.build()
-        print("Jalando padre")
-        val notificationManager = NotificationManagerCompat.from(applicationContext)
-        notificationManager.notify(1, notification)
-        GlobalScope.launch(Dispatchers.IO) {
-            val response = ApiService.locationApi.sendLocation(LocationData(currentLatitude, currentLongitude))
-            if (response.isSuccessful) {
-                Log.d("Si agarro", "Si agarro")
-                // La solicitud se realizó correctamente
-                val responseBody = response.body()
-                // Puedes usar 'responseBody' para obtener más información de la respuesta
-            } else {
-                // Hubo un error en la solicitud
-                Log.d("No agarro", "No agarro")
-                val errorBody = response.errorBody()?.string()
-                // 'errorBody' contiene el cuerpo de la respuesta de error del servidor
-            }
-        }
+    fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        return activeNetwork?.isConnectedOrConnecting == true
     }
 
-    private val handler = Handler(Looper.getMainLooper())
-    private val locationNotificationRunnable = object : Runnable {
-        override fun run() {
-            sendLocationNotification()
-            handler.postDelayed(this, 5000) // 5 segundos
-            print("Jalando padre")
-        }
+    fun isGPSEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
-
-    override fun onStart() {
-        super.onStart()
-        handler.post(locationNotificationRunnable)
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        handler.removeCallbacks(locationNotificationRunnable)
-        //stopLocationUpdates()
-    }
-
 }
