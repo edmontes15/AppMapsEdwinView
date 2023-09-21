@@ -5,16 +5,16 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_icono"
         android:label="MAPS2U"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_icono"
         android:supportsRtl="true"
         android:theme="@style/Theme.MAPS2U"
         tools:targetApi="31">
@@ -22,7 +22,7 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAgLmq3pu6SyesVOGpNAb4dW4qqKkX8O30" />
         <activity
-            android:name=".MainActivityMaps"
+            android:name=".ui.theme.MainActivityMaps"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.DayNight"/>
 

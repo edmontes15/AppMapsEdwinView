@@ -8,8 +8,8 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.appmapsedwin.MainActivityMaps
 import com.example.appmapsedwin.R
+import java.util.Date
 
 class NotificationManager2 (private val context: Context) {
 
@@ -17,7 +17,7 @@ class NotificationManager2 (private val context: Context) {
         const val CHANNEL_ID = "YourChannelId"
     }
 
-    fun sendNotification(latitude: Double, longitude: Double) {
+    fun sendNotification(latitude: Double, longitude: Double, date: Date) {
         // Obtener una instancia de NotificationManagerCompat desde applicationContext
         val notificationManager = NotificationManagerCompat.from(context)
 
@@ -44,7 +44,7 @@ class NotificationManager2 (private val context: Context) {
         // Construir la notificación
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("Nueva notificación")
-            .setContentText("Latitud: $latitude, Longitud: $longitude")
+            .setContentText("Latitud: $latitude, Longitud: $longitude, date: $date")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setOngoing(true)

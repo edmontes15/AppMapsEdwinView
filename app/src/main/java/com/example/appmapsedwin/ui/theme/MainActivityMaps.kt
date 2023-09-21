@@ -1,22 +1,26 @@
-package com.example.appmapsedwin
+package com.example.appmapsedwin.ui.theme
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
-import android.os.Build
+import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import com.example.appmapsedwin.ui.theme.LocationViewModel
-import com.example.appmapsedwin.ui.theme.NotificationManager2
+import com.example.appmapsedwin.R
+import com.example.appmapsedwin.ui.theme.viewModel.LocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -26,6 +30,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import java.util.Calendar
 
 
 class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener,
@@ -37,7 +42,7 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     private lateinit var locationViewModel: LocationViewModel
     private lateinit var notificationManager: NotificationManager2
     private val handler = Handler()
-
+    val currentDate = Calendar.getInstance().time
 
     companion object {
         const val REQUEST_CODE_LOCATION = 0
@@ -50,14 +55,15 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         notificationManager = NotificationManager2(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationViewModel = ViewModelProvider(this)[LocationViewModel::class.java]
-        scheduleNotification()
+
     }
 
     private fun scheduleNotification() {
         val delayMillis = 5000 // 5000 milisegundos = 5 segundos
         handler.postDelayed({
             // Coloca aquí la lógica para enviar la notificación con latitud y longitud
-            notificationManager.sendNotification(currentLatitude, currentLongitude)
+            notificationManager.sendNotification(currentLatitude, currentLongitude, currentDate)
+            sendLocationToServer()
             // Programa la siguiente notificación después de 5 segundos
             scheduleNotification()
         }, delayMillis.toLong())
@@ -66,12 +72,58 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-        createMarker()
-        map.setOnMyLocationButtonClickListener(this)
-        map.setOnMyLocationClickListener(this)
-        enabledLocation()
+        if(isInternetAvailable(this)){
+            if(isGPSEnabled(this)){
+                scheduleNotification()
+                createMarker()
+                map.setOnMyLocationButtonClickListener(this)
+                map.setOnMyLocationClickListener(this)
+                enabledLocation()
+            }else{
+                showRetryDialog2()
+            }
+        }else{
+            showRetryDialog()
+        }
     }
+
+    private fun showRetryDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Sin conexión a Internet")
+        builder.setMessage("No hay conexión a Internet. ¿Deseas volver a intentarlo?")
+        builder.setPositiveButton("Sí") { dialog, which ->
+            val intent = Intent(this, MainActivityMaps::class.java)
+            finish() // Finaliza la actividad actual
+            startActivity(intent)
+        }
+        builder.setNegativeButton("No") { _, _ ->
+            finish()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+    private fun showRetryDialog2() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("No tienes activado la ubicacion")
+        builder.setMessage("Prende tu ubicaion. ¿Deseas volver a intentarlo?")
+        builder.setPositiveButton("Sí") { dialog, which ->
+            val intent = Intent(this, MainActivityMaps::class.java)
+            finish() // Finaliza la actividad actual
+            startActivity(intent)
+        }
+        builder.setNegativeButton("No") { _, _ ->
+            finish()
+        }
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+
+
+
+    // Esta función solicita permisos de notificación
+
 
     private fun createMarker() {
         if (isLocationPermissionGranted()) {
@@ -188,22 +240,19 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     override fun onLocationChanged(location: Location) {
     }
 
-
-
-    override fun onStart() {
-        super.onStart()
-        //handler.post(locationNotificationRunnable)
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        //handler.removeCallbacks(locationNotificationRunnable)
-        //stopLocationUpdates()
-    }
-
     private fun sendLocationToServer() {
         // Llama a la función en el ViewModel para enviar la ubicación
-        locationViewModel.sendLocation(currentLatitude, currentLongitude)
+        locationViewModel.sendLocation(currentLatitude, currentLongitude, currentDate)
+    }
+
+    fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
+        return activeNetwork?.isConnectedOrConnecting == true
+    }
+
+    fun isGPSEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 }
