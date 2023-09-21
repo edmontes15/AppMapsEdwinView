@@ -141,7 +141,7 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
                                 .icon(motorcycleIcon)
                         )
                         map.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(currentLatLng, 50f),
+                            CameraUpdateFactory.newLatLngZoom(currentLatLng, 20f),
                             4000,
                             null
                         )
