@@ -123,28 +123,33 @@ fun scrollView(){
         horizontalAlignment = Alignment.Start
     ) {
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
             Text(text = "Kotlin")
         }
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
+            Text(text = "Jetpack Compose")
+        }
+        Row (verticalAlignment = Alignment.CenterVertically){
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
             Text(text = "Arquitectura MVVM")
         }
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
-            Text(text = "Notificaiones Push del Sistema")
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
+            Text(text = "Notificaciones Push del Sistema")
         }
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
             Text(text = "Google Maps")
         }
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
             Text(text = "XML")
         }
         Row (verticalAlignment = Alignment.CenterVertically){
-            Image(painter = painterResource(id = R.mipmap.ic_perfil),contentDescription = "Logo",)
+            Image(painter = painterResource(id = R.mipmap.ic_android),contentDescription = "Logo",)
             Text(text = "Retrofit")
         }
+
     }
 }
