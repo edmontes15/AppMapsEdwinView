@@ -11,17 +11,12 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import com.example.appmapsedwin.mvvm.model.LocationData
-import com.example.appmapsedwin.mvvm.repository.ApiService
 import com.example.appmapsedwin.ui.theme.LocationViewModel
+import com.example.appmapsedwin.ui.theme.NotificationManager2
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -31,9 +26,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+
 
 class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener,
     LocationListener {
@@ -42,6 +35,9 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     private var currentLatitude: Double = 0.0
     private var currentLongitude: Double = 0.0
     private lateinit var locationViewModel: LocationViewModel
+    private lateinit var notificationManager: NotificationManager2
+    private val handler = Handler()
+
 
     companion object {
         const val REQUEST_CODE_LOCATION = 0
@@ -51,13 +47,22 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_maps)
         createMapFragment()
-        setupNotificationChannel()
-
+        notificationManager = NotificationManager2(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // Inicializa el ViewModel
         locationViewModel = ViewModelProvider(this)[LocationViewModel::class.java]
+        scheduleNotification()
     }
+
+    private fun scheduleNotification() {
+        val delayMillis = 5000 // 5000 milisegundos = 5 segundos
+        handler.postDelayed({
+            // Coloca aquí la lógica para enviar la notificación con latitud y longitud
+            notificationManager.sendNotification(currentLatitude, currentLongitude)
+            // Programa la siguiente notificación después de 5 segundos
+            scheduleNotification()
+        }, delayMillis.toLong())
+    }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -88,6 +93,8 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
                             4000,
                             null
                         )
+
+
                     }
                 }
         } else {
@@ -181,50 +188,17 @@ class MainActivityMaps : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMy
     override fun onLocationChanged(location: Location) {
     }
 
-    fun setupNotificationChannel() {
-        val channelID = "chat"
-        val channelName = "chat"
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelID, channelName, importance)
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun sendLocationNotification() {
-        val channelID = "chat"
-
-        val notification = NotificationCompat.Builder(this, channelID).apply {
-            setContentTitle("Ubicación")
-            setContentText("Latitud: $currentLatitude, Longitud: $currentLongitude")
-            setSmallIcon(R.drawable.ic_moto)
-        }.build()
-        print("Jalando padre")
-        val notificationManager = NotificationManagerCompat.from(applicationContext)
-        notificationManager.notify(1, notification)
-        sendLocationToServer()
-    }
-
-    private val handler = Handler(Looper.getMainLooper())
-    private val locationNotificationRunnable = object : Runnable {
-        override fun run() {
-            sendLocationNotification()
-            handler.postDelayed(this, 5000) // 5 segundos
-            print("Jalando padre")
-        }
-    }
 
     override fun onStart() {
         super.onStart()
-        handler.post(locationNotificationRunnable)
+        //handler.post(locationNotificationRunnable)
 
     }
 
     override fun onStop() {
         super.onStop()
-        handler.removeCallbacks(locationNotificationRunnable)
+        //handler.removeCallbacks(locationNotificationRunnable)
         //stopLocationUpdates()
     }
 

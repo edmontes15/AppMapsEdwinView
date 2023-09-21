@@ -13,10 +13,10 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="MAPS2U"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppMapsEdwin"
+        android:theme="@style/Theme.MAPS2U"
         tools:targetApi="31">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -24,12 +24,13 @@
         <activity
             android:name=".MainActivityMaps"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat"/>
+            android:theme="@style/Theme.AppCompat.DayNight"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.AppMapsEdwin">
+            android:label="MAPS2U"
+            android:theme="@style/Theme.MAPS2U">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
